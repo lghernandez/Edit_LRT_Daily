@@ -4,6 +4,7 @@ __pycache__
 backup
 logs
 working
+input
 DDI-Bidirectional_history_file
 constants.py
 test.py
