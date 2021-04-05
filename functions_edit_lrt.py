@@ -81,13 +81,20 @@ def gzip_lrt(input_file, logger_name):
 def download_lrt(host, l_path, r_path, lrts, logger_name):
     mysftp, mytransport = create_sftp_connection(host)
     mysftp.chdir(r_path)
+    fails = 0
     for lrt in tqdm(lrts, desc="Downloading LRT(s)", leave=False):
         r_file = r_path + "/" + lrt
         l_file = l_path + "\\" + lrt
-        mysftp.get(r_file, l_file)
-        logger_name.info(f"Successfully downloaded LRT: {lrt}")
+        try:
+            mysftp.get(r_file, l_file)
+        except IOError:
+            logger_name.info(f"LRT {lrt} not found.")
+            fails += 1
+        else:
+            logger_name.info(f"Successfully downloaded LRT: {lrt}")
     mysftp.close()
     mytransport.close()
+    return fails
 
 
 def upload_lrt(host, l_path, r_path, lrts, logger_name):
@@ -240,28 +247,33 @@ def edit_lrt_vsr(domain, input_file, vsrs, tables, logger_name):
         vsr_ip = VSRS.get(vsr_name)
         lst_lrt_refresh = [x + f".{domain}" for x in tables]
         lst_lrt = [x + f".{domain}.xml.gz" for x in tables]
-        download_lrt(vsr_ip, WORKING_PATH, REMOTE_PATH, lst_lrt, logger_name)
-        for tab in tqdm(tables, desc="Working in tables", leave=False):
-            logger_name.info(f"Start the work in table {tab}.{domain}.xml")
-            lrt = os.path.join(WORKING_PATH, f"{tab}.{domain}.xml.gz")
-            lrt_bk = os.path.join(
-                BACKUP_PATH,
-                f"{tab}.{domain}-{vsr_name}-{datetime.now().strftime('%d%m%Y_%H%M%S')}.xml.gz",
-            )
-            shutil.copyfile(lrt, lrt_bk)
-            logger_name.info(f"Backup completed from {lrt} to {lrt_bk}")
-            lrt_1 = gunzip_lrt(lrt, logger_name)
-            if tab == "R":
-                generate_lrt_R(lrt_1, input_file, domain, logger_name)
-            elif tab == "S":
-                generate_lrt_S(lrt_1, input_file, logger_name)
-            elif tab == "B":
-                generate_lrt_B(lrt_1, input_file, logger_name)
-            lrt_2 = gzip_lrt(lrt_1, logger_name)
-            logger_name.info(f"Finish the work in table {tab}.{domain}.xml")
-        upload_lrt(vsr_ip, WORKING_PATH, REMOTE_PATH, lst_lrt, logger_name)
-        refresh_lrt(vsr_ip, lst_lrt_refresh, logger_name)
+        fails = download_lrt(vsr_ip, WORKING_PATH, REMOTE_PATH, lst_lrt, logger_name)
+        if fails:
+            logger_name.info(f"Work in {vsr_name} aborted")
+            continue
+        else:
+            for tab in tqdm(tables, desc="Working in tables", leave=False):
+                logger_name.info(f"Start the work in table {tab}.{domain}.xml")
+                lrt = os.path.join(WORKING_PATH, f"{tab}.{domain}.xml.gz")
+                lrt_bk = os.path.join(
+                    BACKUP_PATH,
+                    f"{tab}.{domain}-{vsr_name}-{datetime.now().strftime('%d%m%Y_%H%M%S')}.xml.gz",
+                )
+                shutil.copyfile(lrt, lrt_bk)
+                logger_name.info(f"Backup completed from {lrt} to {lrt_bk}")
+                lrt_1 = gunzip_lrt(lrt, logger_name)
+                if tab == "R":
+                    generate_lrt_R(lrt_1, input_file, domain, logger_name)
+                elif tab == "S":
+                    generate_lrt_S(lrt_1, input_file, logger_name)
+                elif tab == "B":
+                    generate_lrt_B(lrt_1, input_file, logger_name)
+                lrt_2 = gzip_lrt(lrt_1, logger_name)
+                logger_name.info(f"Finish the work in table {tab}.{domain}.xml")
+            upload_lrt(vsr_ip, WORKING_PATH, REMOTE_PATH, lst_lrt, logger_name)
+            refresh_lrt(vsr_ip, lst_lrt_refresh, logger_name)
         logger_name.info(f"Finish the work in {vsr_name}")
+    return fails
 
 
 def save_output_file(logger_name):
