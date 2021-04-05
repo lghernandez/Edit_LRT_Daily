@@ -50,7 +50,9 @@ if task == "1":
     )
 
     # Executing the task
-    edit_lrt_vsr(my_domain, my_csv, vsrs, tables, my_logger)
+    errors = edit_lrt_vsr(my_domain, my_csv, vsrs, tables, my_logger)
+    if errors:
+        print(f"Task completed with errors. Please verify logfile {my_logfile}")
 
 elif task == "2":
     customer = input_values_option2()
@@ -87,9 +89,12 @@ elif task == "3":
     )
 
     # Executing the task
-    edit_lrt_vsr(my_domain, my_csv, vsrs, tables, my_logger)
-    create_file_DDI(input_file_fullpath, customer, my_logger)
-    save_output_file(my_logger)
+    errors = edit_lrt_vsr(my_domain, my_csv, vsrs, tables, my_logger)
+    if errors:
+        print(f"Task completed with errors. Please verify logfile {my_logfile}")
+    else:
+        create_file_DDI(input_file_fullpath, customer, my_logger)
+        save_output_file(my_logger)
 
 elif task == "q":
     print("Thank you for using this script. Goodbye!")
