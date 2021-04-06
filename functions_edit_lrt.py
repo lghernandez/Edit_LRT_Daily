@@ -124,7 +124,7 @@ def generate_lrt_R(lrt_file, csv_file, domain, logger_name):
         user_elem.text = number
         next_elem.text = f"!(^.*)$!sip:\\1;tgrp={tgrp};trunk-context={domain}@{fqdn}!"
         count += 1
-        time.sleep(0.1)
+        time.sleep(0.05)
 
     etree.indent(tree)
     xml_data = etree.tostring(
@@ -157,7 +157,7 @@ def generate_lrt_S(lrt_file, csv_file, logger_name):
         user_elem.text = number
         next_elem.text = f"!(^.*)$!sip:\\1;key={tgrp}@{as_cluster}Cluster!"
         count += 1
-        time.sleep(0.1)
+        time.sleep(0.05)
 
     etree.indent(tree)
     xml_data = etree.tostring(
@@ -192,7 +192,7 @@ def generate_lrt_B(lrt_file, csv_file, logger_name):
         user_elem.text = number
         next_elem.text = f"!(^.*)$!sip:\\1;tgrp={tgrp};trunk-context={tcontext}@{fqdn}!"
         count += 1
-        time.sleep(0.1)
+        time.sleep(0.05)
 
     etree.indent(tree)
     xml_data = etree.tostring(
