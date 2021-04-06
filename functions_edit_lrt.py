@@ -148,7 +148,7 @@ def generate_lrt_S(lrt_file, csv_file, logger_name):
     logger_name.info(f"Total entries: {len(root)}")
     count = 0
     for row in tqdm(csv_file, desc="Adding entries", leave=False):
-        number, tgrp, as_cluster = row[0], row[1], row[3]
+        number, tgrp, as_cluster = row[0], row[3], row[4]
         route_elem = etree.SubElement(root, "route")
         user_elem = etree.SubElement(route_elem, "user")
         next_elem = etree.SubElement(route_elem, "next")
@@ -182,7 +182,7 @@ def generate_lrt_B(lrt_file, csv_file, logger_name):
     count = 0
     for row in tqdm(csv_file, desc="Adding entries", leave=False):
         number = row[0]
-        lst_carrier = CARRIERS.get(row[4])
+        lst_carrier = CARRIERS.get(row[5])
         tgrp, tcontext, fqdn = lst_carrier[0], lst_carrier[1], lst_carrier[2]
         route_elem = etree.SubElement(root, "route")
         user_elem = etree.SubElement(route_elem, "user")
