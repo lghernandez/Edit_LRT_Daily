@@ -279,7 +279,9 @@ def edit_lrt_vsr(domain, input_file, vsrs, tables, logger_name):
 
 def save_output_file(input_file, logger_name):
     current_date_time = datetime.now().strftime("%d%m%Y_%H%M%S")
-    file_record = input_file.rstrip(".csv") + f"_{current_date_time}" + ".csv"
+    file_record = (
+        os.path.basename(input_file).rstrip(".csv") + f"_{current_date_time}" + ".csv"
+    )
     filename = os.path.join(HISTORY_PATH, file_record)
     shutil.copyfile(input_file, filename)
     logger_name.info(f"History file generated: {file_record}")
@@ -409,7 +411,7 @@ def create_file_SN(input_file, enterpise, logger_name):
                             "1/1",
                         ]
                     )
-                    if row[4]:
+                    if len(rows) == 5:
                         writer.writerow(
                             [
                                 data[0],
