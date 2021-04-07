@@ -10,6 +10,7 @@ from functions_socks import create_sftp_connection, create_ssh_connection
 from constants import (
     CARRIERS,
     DDI_FILE,
+    SN_FILE,
     HISTORY_PATH,
     DATA_ARAMIS,
     VSR_NAME,
@@ -276,12 +277,12 @@ def edit_lrt_vsr(domain, input_file, vsrs, tables, logger_name):
     return fails
 
 
-def save_output_file(logger_name):
+def save_output_file(input_file, logger_name):
     current_date_time = datetime.now().strftime("%d%m%Y_%H%M%S")
-    ddi_file_record = DDI_FILE.rstrip(".csv") + f"_{current_date_time}" + ".csv"
-    filename = os.path.join(HISTORY_PATH, ddi_file_record)
-    shutil.copyfile(DDI_FILE, filename)
-    logger_name.info(f"History file generated: {ddi_file_record}")
+    file_record = input_file.rstrip(".csv") + f"_{current_date_time}" + ".csv"
+    filename = os.path.join(HISTORY_PATH, file_record)
+    shutil.copyfile(input_file, filename)
+    logger_name.info(f"History file generated: {file_record}")
 
 
 def get_data_aramis(phone):
@@ -353,6 +354,89 @@ def create_file_DDI(input_file, enterpise, logger_name):
     logger_name.info(f"The {DDI_FILE} has {counter} entries")
 
 
+def create_file_SN(input_file, enterpise, logger_name):
+    total_lines = count_lines_csv(input_file)
+    with open(SN_FILE, "w", newline="") as final:
+        with open(input_file, newline="") as original:
+            reader = csv.reader(
+                original,
+                delimiter="\t",
+            )
+            writer = csv.writer(final, quoting=csv.QUOTE_ALL, delimiter=",")
+            writer.writerow(
+                [
+                    "Source ID",
+                    "Source",
+                    "ISO Code",
+                    "Country",
+                    "Digits",
+                    "Last Modification",
+                    "Source Type",
+                    "Mask",
+                    "Mask Active",
+                    "CPC",
+                    "NumA",
+                    "Group Country NumA",
+                    "Business Unit",
+                    "MNC",
+                    "Rate",
+                    "Billing Increments",
+                ]
+            )
+            counter = 0
+            with tqdm(
+                desc="Generating Special Number file", total=total_lines, colour="green"
+            ) as pbar:
+                for rows in reader:
+                    data, cc = get_data_aramis(rows[0])
+                    writer.writerow(
+                        [
+                            data[0],
+                            "Special-Numbers",
+                            cc,
+                            data[1],
+                            rows[3],
+                            "",
+                            "Fixed",
+                            rows[0],
+                            "1",
+                            "0",
+                            "",
+                            "",
+                            "",
+                            enterpise,
+                            "0,0",
+                            "1/1",
+                        ]
+                    )
+                    if row[4]:
+                        writer.writerow(
+                            [
+                                data[0],
+                                "Special-Numbers",
+                                cc,
+                                data[1],
+                                rows[4],
+                                "",
+                                "Mobile",
+                                rows[0],
+                                "1",
+                                "0",
+                                "",
+                                "",
+                                "",
+                                enterpise,
+                                "0,0",
+                                "1/1",
+                            ]
+                        )
+                    counter += 1
+                    pbar.update(1)
+                    time.sleep(0.1)
+    logger_name.info(f"Successfully generated: {SN_FILE}")
+    logger_name.info(f"The {SN_FILE} has {counter} entries")
+
+
 def print_menu():
     f = Figlet(font="slant")
     print(f.renderText("Daily Tasks"))
@@ -407,3 +491,31 @@ def input_values_option2():
             print("Enter a valid ENTERPRISE name")
             continue
     return customer
+
+
+def input_values_option4():
+    while True:
+        customer = input("Ingress the ENTERPRISE for the customer: ").replace(" ", "")
+        if customer != "":
+            break
+        else:
+            print("Enter a valid ENTERPRISE name")
+            continue
+
+    while True:
+        domain = input("Ingress the customer's domain: ").replace(" ", "")
+        if domain != "":
+            break
+        else:
+            print("Enter a valid domain")
+            continue
+
+    while True:
+        vsrs = input("Ingress the VSRs where to configure the LRTs: ").lower().split()
+        if all(item in VSR_NAME for item in vsrs):
+            break
+        else:
+            print("Enter a valid VSR hostname")
+            continue
+
+    return customer, domain, vsrs
