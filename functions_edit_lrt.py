@@ -444,11 +444,12 @@ def print_menu():
     print("[1] Configure LRT(s)")
     print("[2] Generate DDI-Bidirectional file")
     print("[3] Conf LRT & Gen DDI-Bid")
+    print("[4] Conf SN & Gen Special-Numb")
     print("[q] Exit")
     print(54 * "-")
     while True:
         choice = input("Select the task: ").lower()
-        if choice in ["1", "2", "3", "q"]:
+        if choice in ["1", "2", "3", "4", "q"]:
             return choice
         else:
             print("Please enter a valid option")
